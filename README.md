@@ -1,4 +1,4 @@
-# lumberjack  [![GoDoc](https://godoc.org/gopkg.in/natefinch/lumberjack.v2?status.png)](https://godoc.org/gopkg.in/natefinch/lumberjack.v2) [![Build Status](https://travis-ci.org/natefinch/lumberjack.svg?branch=v2.0)](https://travis-ci.org/natefinch/lumberjack) [![Build status](https://ci.appveyor.com/api/projects/status/00gchpxtg4gkrt5d)](https://ci.appveyor.com/project/natefinch/lumberjack) [![Coverage Status](https://coveralls.io/repos/natefinch/lumberjack/badge.svg?branch=v2.0)](https://coveralls.io/r/natefinch/lumberjack?branch=v2.0)
+# lumberjack [![GoDoc](https://godoc.org/gopkg.in/natefinch/lumberjack.v2?status.png)](https://godoc.org/gopkg.in/natefinch/lumberjack.v2) [![Build Status](https://travis-ci.org/natefinch/lumberjack.svg?branch=v2.0)](https://travis-ci.org/natefinch/lumberjack) [![Build status](https://ci.appveyor.com/api/projects/status/00gchpxtg4gkrt5d)](https://ci.appveyor.com/project/natefinch/lumberjack) [![Coverage Status](https://coveralls.io/repos/natefinch/lumberjack/badge.svg?branch=v2.0)](https://coveralls.io/r/natefinch/lumberjack?branch=v2.0)
 
 ### Lumberjack is a Go package for writing logs to rolling files.
 
@@ -7,7 +7,7 @@ Package lumberjack provides a rolling logger.
 Note that this is v2.0 of lumberjack, and should be imported using gopkg.in
 thusly:
 
-    import "gopkg.in/natefinch/lumberjack.v2"
+    import "github.com/cnk3x/pkg/rotate"
 
 The package name remains simply lumberjack, and the code resides at
 https://github.com/natefinch/lumberjack under the v2.0 branch.
@@ -24,7 +24,6 @@ Lumberjack assumes that only one process is writing to the output files.
 Using the same lumberjack configuration from multiple processes on the same
 machine will result in improper behavior.
 
-
 **Example**
 
 To use lumberjack with the standard library's log package, just pass it into the SetOutput function when your application starts.
@@ -32,7 +31,7 @@ To use lumberjack with the standard library's log package, just pass it into the
 Code:
 
 ```go
-log.SetOutput(&lumberjack.Logger{
+log.SetOutput(&rotate.Writer{
     Filename:   "/var/log/myapp/foo.log",
     MaxSize:    500, // megabytes
     MaxBackups: 3,
@@ -41,11 +40,10 @@ log.SetOutput(&lumberjack.Logger{
 })
 ```
 
+## type Writer
 
-
-## type Logger
-``` go
-type Logger struct {
+```go
+type Writer struct {
     // Filename is the file to write logs to.  Backup log files will be retained
     // in the same directory.  It uses <processname>-lumberjack.log in
     // os.TempDir() if empty.
@@ -78,9 +76,10 @@ type Logger struct {
     // contains filtered or unexported fields
 }
 ```
-Logger is an io.WriteCloser that writes to the specified filename.
 
-Logger opens or creates the logfile on first Write.  If the file exists and
+Writer is an io.WriteCloser that writes to the specified filename.
+
+Writer opens or creates the logfile on first Write. If the file exists and
 is less than MaxSize megabytes, lumberjack will open and append to that file.
 If the file exists and its size is >= MaxSize megabytes, the file is renamed
 by putting the current time in a timestamp in the name immediately before the
@@ -89,53 +88,46 @@ log file is then created using original filename.
 
 Whenever a write would cause the current log file exceed MaxSize megabytes,
 the current file is closed, renamed, and a new log file created with the
-original name. Thus, the filename you give Logger is always the "current" log
+original name. Thus, the filename you give Writer is always the "current" log
 file.
 
-Backups use the log file name given to Logger, in the form `name-timestamp.ext`
+Backups use the log file name given to Writer, in the form `name-timestamp.ext`
 where name is the filename without the extension, timestamp is the time at which
 the log was rotated formatted with the time.Time format of
-`2006-01-02T15-04-05.000` and the extension is the original extension.  For
-example, if your Logger.Filename is `/var/log/foo/server.log`, a backup created
+`2006-01-02T15-04-05.000` and the extension is the original extension. For
+example, if your Writer.Filename is `/var/log/foo/server.log`, a backup created
 at 6:30pm on Nov 11 2016 would use the filename
 `/var/log/foo/server-2016-11-04T18-30-00.000.log`
 
 ### Cleaning Up Old Log Files
-Whenever a new logfile gets created, old log files may be deleted.  The most
+
+Whenever a new logfile gets created, old log files may be deleted. The most
 recent files according to the encoded timestamp will be retained, up to a
-number equal to MaxBackups (or all of them if MaxBackups is 0).  Any files
+number equal to MaxBackups (or all of them if MaxBackups is 0). Any files
 with an encoded timestamp older than MaxAge days are deleted, regardless of
-MaxBackups.  Note that the time encoded in the timestamp is the rotation
+MaxBackups. Note that the time encoded in the timestamp is the rotation
 time, which may differ from the last time that file was written to.
 
 If MaxBackups and MaxAge are both 0, no old log files will be deleted.
 
+### func (\*Writer) Close
 
-
-
-
-
-
-
-
-
-
-### func (\*Logger) Close
-``` go
-func (l *Logger) Close() error
+```go
+func (l *Writer) Close() error
 ```
+
 Close implements io.Closer, and closes the current logfile.
 
+### func (\*Writer) Rotate
 
-
-### func (\*Logger) Rotate
-``` go
-func (l *Logger) Rotate() error
+```go
+func (l *Writer) Rotate() error
 ```
-Rotate causes Logger to close the existing log file and immediately create a
-new one.  This is a helper function for applications that want to initiate
+
+Rotate causes Writer to close the existing log file and immediately create a
+new one. This is a helper function for applications that want to initiate
 rotations outside of the normal rotation rules, such as in response to
-SIGHUP.  After rotating, this initiates a cleanup of old log files according
+SIGHUP. After rotating, this initiates a cleanup of old log files according
 to the normal rules.
 
 **Example**
@@ -145,7 +137,7 @@ Example of how to rotate in response to SIGHUP.
 Code:
 
 ```go
-l := &lumberjack.Logger{}
+l := &rotate.Writer{}
 log.SetOutput(l)
 c := make(chan os.Signal, 1)
 signal.Notify(c, syscall.SIGHUP)
@@ -158,22 +150,17 @@ go func() {
 }()
 ```
 
-### func (\*Logger) Write
-``` go
-func (l *Logger) Write(p []byte) (n int, err error)
+### func (\*Writer) Write
+
+```go
+func (l *Writer) Write(p []byte) (n int, err error)
 ```
-Write implements io.Writer.  If a write would cause the log file to be larger
+
+Write implements io.Writer. If a write would cause the log file to be larger
 than MaxSize, the file is closed, renamed to include a timestamp of the
 current time, and a new log file is created using the original log file name.
 If the length of the write is greater than MaxSize, an error is returned.
 
+---
 
-
-
-
-
-
-
-
-- - -
 Generated by [godoc2md](http://godoc.org/github.com/davecheney/godoc2md)

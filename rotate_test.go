@@ -1,6 +1,7 @@
+//go:build linux
 // +build linux
 
-package lumberjack
+package rotate
 
 import (
 	"log"
@@ -10,8 +11,8 @@ import (
 )
 
 // Example of how to rotate in response to SIGHUP.
-func ExampleLogger_Rotate() {
-	l := &Logger{}
+func ExampleLoggerRotate() {
+	l := &Writer{}
 	log.SetOutput(l)
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, syscall.SIGHUP)

@@ -1,6 +1,7 @@
+//go:build !linux
 // +build !linux
 
-package lumberjack
+package rotate
 
 import (
 	"os"

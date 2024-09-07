@@ -1,6 +1,7 @@
+//go:build linux
 // +build linux
 
-package lumberjack
+package rotate
 
 import (
 	"os"
@@ -21,7 +22,7 @@ func TestMaintainMode(t *testing.T) {
 	isNil(err, t)
 	f.Close()
 
-	l := &Logger{
+	l := &Writer{
 		Filename:   filename,
 		MaxBackups: 1,
 		MaxSize:    100, // megabytes
@@ -64,7 +65,7 @@ func TestMaintainOwner(t *testing.T) {
 	isNil(err, t)
 	f.Close()
 
-	l := &Logger{
+	l := &Writer{
 		Filename:   filename,
 		MaxBackups: 1,
 		MaxSize:    100, // megabytes
@@ -97,7 +98,7 @@ func TestCompressMaintainMode(t *testing.T) {
 	isNil(err, t)
 	f.Close()
 
-	l := &Logger{
+	l := &Writer{
 		Compress:   true,
 		Filename:   filename,
 		MaxBackups: 1,
@@ -147,7 +148,7 @@ func TestCompressMaintainOwner(t *testing.T) {
 	isNil(err, t)
 	f.Close()
 
-	l := &Logger{
+	l := &Writer{
 		Compress:   true,
 		Filename:   filename,
 		MaxBackups: 1,
